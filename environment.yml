@@ -1,0 +1,20 @@
+# conda env create --name deepmind-env --file=environment.yml
+name: deepmind-env
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pytorch
+  - transformers
+  - tqdm
+  - matplotlib
+  - bitsandbytes
+  - datasets
+  - accelerate
+  - einops
+  - wandb
+  - peft
+  - huggingface_hub
+  - pytorch-cuda=12.1
