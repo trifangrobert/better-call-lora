@@ -10,7 +10,7 @@ The rest of the pipeline (model, dataset, trainer) is identical, so any
 performance gap is attributable to the initialisation scheme.
 
 Tested on:
-* CUDA 12.3 + RTX 2070 8 GB
+* CUDA 12.1 + RTX 2070 8 GB
 
 Usage examples
 --------------
