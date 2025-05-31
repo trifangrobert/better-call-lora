@@ -77,6 +77,8 @@ class Config:
     max_seq_len: int = 128
     rank: int = 8
     alpha: int = 16
+    loraplus_lr_embedding: float = 1e-06  # LoRA+ embedding LR, default is 1e-6
+    loraplus_lr_ratio: float = 1.0  # LoRA+ LR ratio, default is 1.0
     batch_size: int = 1
     grad_accum: int = 16
     num_epochs: int = 1
@@ -355,8 +357,8 @@ def run(cfg: Config):
         run_name=cfg.run_name,
 
         remove_unused_columns=False,
-        loraplus_lr_embedding=1e-06,
-        loraplus_lr_ratio=4.0,
+        loraplus_lr_embedding=cfg.loraplus_lr_embedding,
+        loraplus_lr_ratio=cfg.loraplus_lr_ratio,
     )
 
     print("Training arguments:")
@@ -462,6 +464,8 @@ def parse_cli() -> Config:
     p.add_argument("--val_samples", type=int, default=Config.val_samples)
     p.add_argument("--rank", type=int, default=Config.rank)
     p.add_argument("--alpha", type=int, default=Config.alpha)
+    p.add_argument("--loraplus_lr_embedding", type=float, default=Config.loraplus_lr_embedding)
+    p.add_argument("--loraplus_lr_ratio", type=float, default=Config.loraplus_lr_ratio)
     p.add_argument("--target_modules", nargs="*", default=None)
     args = p.parse_args()
 
