@@ -61,7 +61,7 @@ import wandb
 from peft import LoraConfig, get_peft_model
 from peft.tuners.lora import LoraLayer
 
-from loraplus.lora_plus import LoraPlusTrainingArguments
+from loraplus.lora_plus import LoraPlusTrainer, LoraPlusTrainingArguments
 
 
 # --------------------------------------------------------------------------------------
@@ -384,7 +384,7 @@ def run(cfg: Config):
 
     model = model.to(device)
 
-    class SST2Trainer(Trainer):
+    class SST2Trainer(LoraPlusTrainer):
         def prediction_step(self, model, inputs, prediction_loss_only=False, **kwargs):
             # If labels are scalar (sentiment), run custom eval logic
             if inputs["labels"].ndim == 1:
