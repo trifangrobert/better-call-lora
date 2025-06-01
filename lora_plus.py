@@ -464,13 +464,17 @@ def parse_cli() -> Config:
     p.add_argument("--val_samples", type=int, default=Config.val_samples)
     p.add_argument("--rank", type=int, default=Config.rank)
     p.add_argument("--alpha", type=int, default=Config.alpha)
-    p.add_argument("--loraplus_lr_embedding", type=float, default=Config.loraplus_lr_embedding)
-    p.add_argument("--loraplus_lr_ratio", type=float, default=Config.loraplus_lr_ratio)
+    p.add_argument("--lr_A", type=float, default=Config.lr)
+    p.add_argument("--lr_B", type=float, default=Config.loraplus_lr_ratio * Config.lr)
     p.add_argument("--target_modules", nargs="*", default=None)
     args = p.parse_args()
 
     cfg_dict = vars(Config())  # default values
     cfg_dict.update(vars(args))
+    del cfg_dict["lr_A"]
+    del cfg_dict["lr_B"]
+    cfg_dict["lr"] = args.lr_A
+    cfg_dict["loraplus_lr_ratio"] = args.lr_B / args.lr_A
     return Config(**cfg_dict)
 
 
