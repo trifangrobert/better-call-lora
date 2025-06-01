@@ -16,7 +16,7 @@ for lr_A in "${lr_A_list[@]}"; do
         fi
         run_name="loraplus_alpha_${alpha}_r_${rank}_lr_A_${lr_A}_lr_B_${lr_B}"
         echo "Running LoRA+ with lr_A=$lr_A, lr_B=$lr_B: $(date)"
-        python.exe lora_plus.py --init_variant A_uniform --run_name "$run_name" --base_model TinyLlama/TinyLlama-1.1B-Chat-v1.0 --rank $rank --alpha $alpha --lr_A $lr_A --lr_B $lr_B --train_samples 1000
+        python.exe lora_plus.py --init_variant A_uniform --run_name "$run_name" --base_model TinyLlama/TinyLlama-1.1B-Chat-v1.0 --rank $rank --alpha $alpha --lr_A $lr_A --lr_B $lr_B
         echo "Finished LoRA+ with lr_A=$lr_A, lr_B=$lr_B: $(date)"
     done
 done
