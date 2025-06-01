@@ -61,8 +61,6 @@ import wandb
 from peft import LoraConfig, get_peft_model
 from peft.tuners.lora import LoraLayer
 
-from loraplus.lora_plus import LoraPlusTrainer, LoraPlusTrainingArguments
-
 
 # --------------------------------------------------------------------------------------
 # Configuration dataclass ----------------------------------------------------------------
@@ -77,15 +75,13 @@ class Config:
     max_seq_len: int = 128
     rank: int = 8
     alpha: int = 16
-    loraplus_lr_embedding: float = 1e-06  # LoRA+ embedding LR, default is 1e-6
-    loraplus_lr_ratio: float = 1.0  # LoRA+ LR ratio, default is 1.0
     batch_size: int = 1
     grad_accum: int = 16
     num_epochs: int = 1
     lr: float = 2e-4
     weight_decay: float = 0.0
     bf16: bool = True
-    init_variant: str = "B_uniform"  # or "A_uniform"
+    init_variant: str = "pissa_niter_16"  # custom init variant
     target_modules: List[str] | None = None  # detect automatically if None
     run_name: str = "lora_ba_init"
 
@@ -121,17 +117,17 @@ def infer_target_modules(model) -> List[str]:
 # Custom initialisation -------------------------------------------------------------------
 # --------------------------------------------------------------------------------------
 
-def init_lora_weights(model, variant: str, a_low: float = -0.01, a_high: float = 0.01):
-    for module in model.modules():
-        if isinstance(module, LoraLayer):
-            if variant == "B_uniform":
-                torch.nn.init.zeros_(module.lora_A["default"].weight)
-                torch.nn.init.uniform_(module.lora_B["default"].weight, a=a_low, b=a_high)
-            elif variant == "A_uniform":
-                torch.nn.init.uniform_(module.lora_A["default"].weight, a=a_low, b=a_high)
-                torch.nn.init.zeros_(module.lora_B["default"].weight)
-            else:
-                raise ValueError(f"Unknown init_variant: {variant}")
+# def init_lora_weights(model, variant: str, a_low: float = -0.01, a_high: float = 0.01):
+#     for module in model.modules():
+#         if isinstance(module, LoraLayer):
+#             if variant == "B_uniform":
+#                 torch.nn.init.zeros_(module.lora_A["default"].weight)
+#                 torch.nn.init.uniform_(module.lora_B["default"].weight, a=a_low, b=a_high)
+#             elif variant == "A_uniform":
+#                 torch.nn.init.uniform_(module.lora_A["default"].weight, a=a_low, b=a_high)
+#                 torch.nn.init.zeros_(module.lora_B["default"].weight)
+#             else:
+#                 raise ValueError(f"Unknown init_variant: {variant}")
 
 
 # --------------------------------------------------------------------------------------
@@ -247,6 +243,10 @@ def run(cfg: Config):
         target_modules=target_modules,
         bias="none",
         task_type="CAUSAL_LM",
+
+        # PiSSA initialisation
+        init_lora_weights=cfg.init_variant,
+        lora_dropout=0.0,
     )
 
     # def convert_to_bra(layer: LoraLayer, r_rank: int):
@@ -278,10 +278,10 @@ def run(cfg: Config):
     #     if isinstance(m, LoraLayer):
     #         convert_to_bra(m, cfg.rank)
     # print("LoRA layers converted to BRA")
-    
+
     model = get_peft_model(model, lora_cfg)
 
-    init_lora_weights(model, cfg.init_variant)
+    # init_lora_weights(model, cfg.init_variant)
     model.print_trainable_parameters()
 
     # ---- Dataset ----
@@ -310,7 +310,7 @@ def run(cfg: Config):
 
     acc_metric = evaluate.load("accuracy")
     f1_metric = evaluate.load("f1", average="macro")
-    
+
     # def compute_metrics(eval_pred):
     #     logits, labels = eval_pred          # both are np.ndarray
     #     preds = (logits[:, pos_tok] > logits[:, neg_tok]).astype(int)
@@ -340,7 +340,7 @@ def run(cfg: Config):
         val_pred = model(input_ids=val_sample)
         print(f"Validation sample prediction: {val_pred.logits.shape}")
 
-    targs = LoraPlusTrainingArguments(
+    targs = TrainingArguments(
         output_dir=f"runs/{cfg.run_name}",
         per_device_train_batch_size=cfg.batch_size,
         per_device_eval_batch_size=cfg.batch_size,
@@ -349,16 +349,12 @@ def run(cfg: Config):
         weight_decay=cfg.weight_decay,
         num_train_epochs=cfg.num_epochs,
         bf16=cfg.bf16,
-        
+
         logging_steps=10,
         eval_strategy="steps",
         eval_steps=50,
         save_steps=200,
         run_name=cfg.run_name,
-
-        remove_unused_columns=False,
-        loraplus_lr_embedding=cfg.loraplus_lr_embedding,
-        loraplus_lr_ratio=cfg.loraplus_lr_ratio,
     )
 
     print("Training arguments:")
@@ -386,7 +382,7 @@ def run(cfg: Config):
 
     model = model.to(device)
 
-    class SST2Trainer(LoraPlusTrainer):
+    class SST2Trainer(Trainer):
         def prediction_step(self, model, inputs, prediction_loss_only=False, **kwargs):
             # If labels are scalar (sentiment), run custom eval logic
             if inputs["labels"].ndim == 1:
@@ -397,7 +393,7 @@ def run(cfg: Config):
                 return (None, token_logits, inputs["labels"].cpu())
             # otherwise fall back to default (training batches)
             return super().prediction_step(model, inputs, prediction_loss_only, **kwargs)
-        
+
     # sanity check
     train_sample = train_ds[0]
     val_sample = val_ds[0]
@@ -456,25 +452,20 @@ def run(cfg: Config):
 # --------------------------------------------------------------------------------------
 
 def parse_cli() -> Config:
-    p = argparse.ArgumentParser(description="LoRA+ experiment runner")
+    p = argparse.ArgumentParser(description="PiSSA initialisation experiment runner")
     p.add_argument("--base_model", type=str, default=Config.base_model)
-    p.add_argument("--init_variant", choices=["B_uniform", "A_uniform"], default=Config.init_variant)
+    p.add_argument("--init_variant", default=Config.init_variant)
     p.add_argument("--run_name", type=str, default=Config.run_name)
     p.add_argument("--train_samples", type=int, default=Config.train_samples)
     p.add_argument("--val_samples", type=int, default=Config.val_samples)
     p.add_argument("--rank", type=int, default=Config.rank)
     p.add_argument("--alpha", type=int, default=Config.alpha)
-    p.add_argument("--lr_A", type=float, default=Config.lr)
-    p.add_argument("--lr_B", type=float, default=Config.loraplus_lr_ratio * Config.lr)
-    p.add_argument("--target_modules", nargs="*", default=None)
+    p.add_argument("--lr", type=float, default=Config.lr)
+    p.add_argument("--target_modules", type=str, nargs="*", default=None)
     args = p.parse_args()
 
     cfg_dict = vars(Config())  # default values
     cfg_dict.update(vars(args))
-    del cfg_dict["lr_A"]
-    del cfg_dict["lr_B"]
-    cfg_dict["lr"] = args.lr_A
-    cfg_dict["loraplus_lr_ratio"] = args.lr_B / args.lr_A
     return Config(**cfg_dict)
 
 
