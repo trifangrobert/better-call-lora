@@ -1,0 +1,71 @@
+\documentclass[a4paper,10pt,twocolumn,english]{article}
+%---------------------------------------------------------
+\usepackage{subcaption}
+\usepackage{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+\usepackage{bm}
+%---------------------------------------------------------
+\newcommand{\eref}[1]{(\ref{#1})}
+%---------------------------------------------------------
+\title{\textbf{Better Call LoRA}}
+
+\author{
+    \begin{tabular}{c c}
+        Robert Trifan & Stefan Popa \\
+    \end{tabular}\\[0.5em]
+    \footnotesize University of Bucharest
+}
+
+\date{\empty}
+
+\begin{document}
+\maketitle
+%---------------------------------------------------------
+\begin{abstract} 
+Explain what this survey is about, the methods used and the metrics used.
+\end{abstract}
+%---------------------------------------------------------
+\section{Introduction}
+Explain the importance of LoRA for LLMs and the need for a survey.
+
+\section{Setup}
+\noindent\textbf{Model} Describe TinyLlama-1.1B \cite{zhang2024tinyllamaopensourcesmalllanguage} 
+
+\noindent\textbf{Dataset} Desribe GLUE \cite{wang2019gluemultitaskbenchmarkanalysis}
+
+\noindent\textbf{Training} Describe the prompt used for training.
+
+\noindent\textbf{Evaluation} Describe the evaluation step.
+
+\noindent\textbf{Metrics} Describe the metrics used: accuracy, F1, train time, GPU memory.
+
+%---------------------------------------------------------
+\section{Low Rank Adaptation}
+\noindent\textbf{LoRA} Describe LoRA \cite{hu2021loralowrankadaptationlarge}.
+
+\noindent\textbf{Impact of initialization dynamics on LoRA} Describe different LoRA \cite{hayou2024impactinitializationlorafinetuning}
+
+\noindent\textbf{LoRA-XS} Describe LoRA-XS \cite{balazy2024loraxslowrankadaptationextremely}.
+
+\noindent\textbf{LoRA+} Describe LoRA+ \cite{hayou2024loraefficientlowrank}
+
+\noindent\textbf{PiSSA} Describe PiSSA \cite{meng2025pissaprincipalsingularvalues}
+
+%---------------------------------------------------------
+\section{Experiments}
+For each method, describe the hyperparameters explored with a table.
+
+Gather the best results into a final table, comparing the methods.
+
+%---------------------------------------------------------
+\section{Conclusion}
+Explain that, because of limited compute resources, we couldn't see meaningful results.
+
+\bibliography{mybib}
+\bibliographystyle{plain}
+
+\end{document}
