@@ -37,9 +37,9 @@ Large language models (LLMs) have rapidly become the de facto standard for vario
 
 Training or fully fine-tuning these models typically implies billions of parameters, weeks of GPU time and significant energy consumption. Such costs are often out of reach for many practitioners, leading to a growing interest in more efficient alternatives.
 
-Low-rank adaptation (LoRA) \cite{hu2021loralowrankadaptationlarge} tackles this challenge by injecting a pair of low-rank matrices into the weights of a pre-trained model and learning only those additional parameteres while freezing the original model. Despite the simplicity of the approach, LoRA has matched or even surpassed the performance of full fine-tuning on many tasks, while reducing the memory footprint and training time by orders of magnitude.
+Low-rank adaptation (LoRA) \cite{hu2021loralowrankadaptationlarge} tackles this challenge by injecting a pair of low-rank matrices into the weights of a pre-trained model and learning only those additional parameters while freezing the original model. Despite the simplicity of the approach, LoRA has matched or even surpassed the performance of full fine-tuning on many tasks, while reducing the memory footprint and training time by orders of magnitude.
 
-Building on top of this idea, a growing literature has emerged, proposing improvements that modify the initialization, learning rates schedules or factorisation of the low-rank matrices hoping to further enhance the effectiveness of LoRA. 
+Building on top of this idea, a growing literature has emerged, proposing improvements that modify the initialization, learning rates schedules or factorisation structure of the low-rank matrices hoping to further enhance the effectiveness of LoRA. While these extensions are promising, their practical impact remains unclear due to inconsistencies in experimental setups.
 
 This survey offers a comprehensive overview of five LoRA variants, including the original LoRA, and benchmarks them on a sentiment classification task using the TinyLlama-1.1B model \cite{zhang2024tinyllamaopensourcesmalllanguage} and the GLUE SST-2 dataset \cite{wang2019gluemultitaskbenchmarkanalysis}. By standardizing the model size, dataset and evaluation metrics, we aim to provide an apples-to-apples comparison of these methods under realistic resource constraints.
 
