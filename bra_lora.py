@@ -260,8 +260,52 @@ def run(cfg: Config):
         task_type="CAUSAL_LM",
     )
 
+    def convert_to_bra(layer: LoraLayer, r_rank: int):
+        """
+        Replace the default LoRA update  (ΔW = B @ A)
+        with               ΔW = B @ R @ A   where  R ∈ ℝ^{r×r}.
+        """
+        # ① create a fresh R parameter, init as identity (or uniform)
+        R = torch.nn.Parameter(torch.eye(r_rank, dtype=layer.lora_A["default"].weight.dtype,
+                                        device=layer.lora_A["default"].weight.device))
+        layer.register_parameter("lora_R", R)
+
+        # ② stash original forward; then monkey-patch
+        orig_forward = layer.forward
+
+        def bra_forward(self, x: torch.Tensor):
+            # self.lora_A/B are {adapter: Linear}. `active_adapter` can be a
+            # string or a list (e.g. ['default']).  Convert to a single name.
+            adapter = getattr(self, "active_adapter", "default")
+            if isinstance(adapter, (list, tuple)):
+                if len(adapter) != 1:
+                    raise RuntimeError(
+                        f"BRA forward expects exactly one active adapter, got {adapter}"
+                    )
+                adapter = adapter[0]
+            A  = self.lora_A[adapter].weight      # (r × in)
+            B  = self.lora_B[adapter].weight      # (out × r)
+            Rm = self.lora_R                      # (r × r) trainable
+            delta_w = (B @ Rm @ A).to(x.dtype)
+
+            # `self.scaling` is a dict {adapter_name: scale} in recent PEFT
+            # versions; fall back to float for older releases.
+            scale = self.scaling[adapter] if isinstance(self.scaling, dict) else self.scaling
+            return orig_forward(x) + scale * torch.nn.functional.linear(x, delta_w)
+
+        layer.forward = bra_forward.__get__(layer, LoraLayer)  # bind method
+
     model = get_peft_model(model, lora_cfg)
+
+    for m in model.modules():
+        if isinstance(m, LoraLayer):
+            convert_to_bra(m, cfg.rank)
+    print("LoRA layers converted to BRA")
+
     print(f"Model architecture: {model}")
+    # layer = model.base_model.model.model.layers[0].self_attn.q_proj   # pick any
+    # for name, param in layer.named_parameters():
+    #     print(name, param.shape, param.requires_grad)
 
     init_lora_weights(model, cfg.init_variant)
     model.print_trainable_parameters()
@@ -349,17 +393,17 @@ def run(cfg: Config):
     print(f"LoRA rank: {cfg.rank}, alpha: {cfg.alpha}, init variant: {cfg.init_variant}")
 
     # ---- W&B logging ----
-    wandb.init(
-        project="lora_ba_init",
-        name=cfg.run_name,
-        config={
-            **vars(cfg),
-            "params/total": total_params,
-            "params/trainable": trainable_params,
-            "params/percent": param_percent,
-        },
-        tags=[cfg.init_variant],
-    )
+    # wandb.init(
+    #     project="lora_ba_init",
+    #     name=cfg.run_name,
+    #     config={
+    #         **vars(cfg),
+    #         "params/total": total_params,
+    #         "params/trainable": trainable_params,
+    #         "params/percent": param_percent,
+    #     },
+    #     tags=[cfg.init_variant],
+    # )
 
     model = model.to(device)
 

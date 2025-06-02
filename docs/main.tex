@@ -1,0 +1,90 @@
+\documentclass[a4paper,10pt,twocolumn,english]{article}
+%---------------------------------------------------------
+\usepackage{subcaption}
+\usepackage{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+\usepackage{bm}
+\usepackage{cite}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+%---------------------------------------------------------
+\newcommand{\eref}[1]{(\ref{#1})}
+%---------------------------------------------------------
+\title{\textbf{Better Call LoRA}}
+
+\author{
+    \begin{tabular}{c c}
+        Robert Trifan & Stefan Popa \\
+    \end{tabular}\\[0.5em]
+    \footnotesize University of Bucharest
+}
+
+\date{\empty}
+
+\begin{document}
+\maketitle
+%---------------------------------------------------------
+\begin{abstract} 
+Low-rank adaptation (LoRA) has become a lightweight alternative to full fine-tuning for large language models. In this work, we benchmark vanilla LoRA and four recent LoRA variants: swapped-init LoRA (A = 0, B $\sim \mathcal{U}(-0.01, 0.01)$), LoRA-XS ($A \cdot R \cdot B$ factorisation), LoRA+ ($\eta_A \neq \eta_B$ learning rate scaling) and PiSSA-initialised LoRA ($\text{SVD}(W)$ warm-start) on the TinyLlama-1.1 B backbone and the GLUE SST-2 sentiment-classification task.  All experiments were performed on a single RTX 2070 (8 GB), enforcing strict memory budgets. We report classification accuracy, macro-F1, wall-clock training time and peak GPU memory to highlight the trade-offs each variant offers under resource constrained conditions.
+\end{abstract}
+%---------------------------------------------------------
+\section{Introduction}
+
+Large language models (LLMs) have rapidly become the de facto standard for various natural language processing tasks, ranging from search and dialog to code generation and summarization. Their ubiquity is largely attributed to their capacity to learn from vast amounts of data, but this comes at a cost: the computational resources required for training and fine-tuning these models are substantial. 
+
+Training or fully fine-tuning these models typically implies billions of parameters, weeks of GPU time and significant energy consumption. Such costs are often out of reach for many practitioners, leading to a growing interest in more efficient alternatives.
+
+Low-rank adaptation (LoRA) \cite{hu2021loralowrankadaptationlarge} tackles this challenge by injecting a pair of low-rank matrices into the weights of a pre-trained model and learning only those additional parameters while freezing the original model. Despite the simplicity of the approach, LoRA has matched or even surpassed the performance of full fine-tuning on many tasks, while reducing the memory footprint and training time by orders of magnitude.
+
+Building on top of this idea, a growing literature has emerged, proposing improvements that modify the initialization, learning rates schedules or factorisation structure of the low-rank matrices hoping to further enhance the effectiveness of LoRA. While these extensions are promising, their practical impact remains unclear due to inconsistencies in experimental setups.
+
+This survey offers a comprehensive overview of five LoRA variants, including the original LoRA, and benchmarks them on a sentiment classification task using the TinyLlama-1.1B model \cite{zhang2024tinyllamaopensourcesmalllanguage} and the GLUE SST-2 dataset \cite{wang2019gluemultitaskbenchmarkanalysis}. By standardizing the model size, dataset and evaluation metrics, we aim to provide an apples-to-apples comparison of these methods under realistic resource constraints.
+
+\section{Setup}
+\noindent\textbf{Model} Describe TinyLlama-1.1B \cite{zhang2024tinyllamaopensourcesmalllanguage} 
+
+\noindent\textbf{Dataset} Desribe GLUE \cite{wang2019gluemultitaskbenchmarkanalysis}. The SST-2 dataset consists of sentences labeled with their sentiment (positive or negative). For example:
+
+\begin{itemize}
+    \item \textbf{Sentence:} ``klein, charming in comedies like american pie and dead-on in election''
+    \item \textbf{Label:} positive
+\end{itemize}
+
+\noindent\textbf{Training} During training, we cast SST-2 as a single-turn instruction-following language-model task. Formally, for every sentence \textit{sentence} and label \textit{sentiment}, we build the prompt \texttt{Classify the sentiment of this sentence: <sentence>\textbackslash n\textbackslash n.Sentiment: <sentiment>\textbackslash n}. The tokenized prompt is fed to the model as both \texttt{input\_ids} and \texttt{labels} to ensure the model learns to predict the sentiment label directly. All pretrained model weights stay frozen by setting \texttt{requires\_grad=False}, while the LoRA parameters are trained with a batch size of 1 and gradient accumulation of 16. We trained for 1 epochs, as the focus for large language models is the number of tokens processed rather than epochs. 
+
+\noindent\textbf{Evaluation} At validation time, we feed the same prompt \emph{without} the sentiment token \texttt{Classify the sentiment of this sentence: <sentence>\textbackslash n\textbackslash n.Sentiment:}. A single forward pass yields the logits for the final position. We verified that each label corresponds to a single token (e.g., " positive" and " negative") to ensure a valid head-to-head comparison in the final logit vector. We manually extract the token for each sentiment and look up its index in the model's vocabulary. The prediction is the index of the sentiment token with the highest logit. 
+
+\noindent\textbf{Metrics} Describe the metrics used: accuracy, F1, train time, GPU memory.
+
+\noindent\textbf{Hardware} All experiments were run on a single NVIDIA RTX 2070 with 8 GB of GPU memory. We enforced strict memory budgets to ensure that all methods could be compared under the same conditions. The training time was measured in wall-clock time, and the peak GPU memory usage was monitored throughout the training process.
+
+\section{Low Rank Adaptation}
+\noindent\textbf{LoRA.}  Low-Rank Adaptation (LoRA) \cite{hu2021loralowrankadaptationlarge} freezes the pre-trained weight matrix $W\!\in\!\mathbb{R}^{d_{\text{out}}\times d_{\text{in}}}$ and learns a low-rank residual $\Delta W = A B^{\top}$ with $A\!\in\!\mathbb{R}^{d_{\text{out}}\times r}$ and $B\!\in\!\mathbb{R}^{d_{\text{in}}\times r}$, rank $r\!\ll\!\min(d_{\text{out}},d_{\text{in}})$.  During fine-tuning the forward pass uses $W+\Delta W$ while gradients flow only through $A$ and $B$, reducing trainable parameters from $d_{\text{out}}d_{\text{in}}$ to $r(d_{\text{out}}+d_{\text{in}})$.  Because the base weights never change, LoRA brings large memory savings by orders of magnitude (no optimizer states on $W$) and enables faster experimentation on consumer GPUs.
+
+\noindent\textbf{Swapped-init LoRA (A = 0, B $\sim\mathcal{U}$).}  The original LoRA initialises $A$ from a small uniform distribution and sets $B$ to zero so that $\Delta W$ starts at 0.  Hayou~et~al.\ \cite{hayou2024impactinitializationlorafinetuning} dive deeper into the intuition behind this choice, arguing that it's is indeed better to start from (A = 0, B $\sim\mathcal{U}$) instead of (A $\sim\mathcal{U}$, B = 0) and the reason behind this might be that the first initializatino allows the use of larger learning rates (without causing output instability) resulting in more efficient learning.
+
+\noindent\textbf{LoRA-XS.}  LoRA-XS \cite{balazy2024loraxslowrankadaptationextremely} adds an intermediate low-rank matrix $R\!\in\!\mathbb{R}^{r\times r}$ and factorises the residual as $\Delta W = A R B^{\top}$.  The extra $r^{2}$ parameters increase expressiveness while preserving the $\mathcal{O}(r(d_{\text{out}}+d_{\text{in}}))$ memory budget (for typical $r\!\ll\!d$ the $r^{2}$ term is negligible). Empirically, LoRA-XS allows for more expressive low-rank representations while maintaining the same memory footprint as vanilla LoRA.
+
+\noindent\textbf{LoRA+} Describe LoRA+ \cite{hayou2024loraefficientlowrank}
+
+\noindent\textbf{PiSSA} Describe PiSSA \cite{meng2025pissaprincipalsingularvalues}
+
+%---------------------------------------------------------
+\section{Experiments}
+For each method, describe the hyperparameters explored with a table.
+
+Gather the best results into a final table, comparing the methods.
+
+%---------------------------------------------------------
+\section{Conclusion}
+Explain that, because of limited compute resources, we couldn't see meaningful results.
+
+\bibliography{mybib}
+\bibliographystyle{plain}
+
+\end{document}
