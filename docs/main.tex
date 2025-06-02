@@ -43,15 +43,14 @@ Building on top of this idea, a growing literature has emerged, proposing improv
 
 This survey offers a comprehensive overview of five LoRA variants, including the original LoRA, and benchmarks them on a sentiment classification task using the TinyLlama-1.1B model \cite{zhang2024tinyllamaopensourcesmalllanguage} and the GLUE SST-2 dataset \cite{wang2019gluemultitaskbenchmarkanalysis}. By standardizing the model size, dataset and evaluation metrics, we aim to provide an apples-to-apples comparison of these methods under realistic resource constraints.
 
-
 \section{Setup}
 \noindent\textbf{Model} Describe TinyLlama-1.1B \cite{zhang2024tinyllamaopensourcesmalllanguage} 
 
 \noindent\textbf{Dataset} Desribe GLUE \cite{wang2019gluemultitaskbenchmarkanalysis}
 
-\noindent\textbf{Training} Describe the prompt used for training.
+\noindent\textbf{Training} During training, we cast SST-2 as a single-turn instruction-following language-model task. Formally, for every sentence \textit{sentence} and label \textit{sentiment}, we build the prompt \texttt{Classify the sentiment of this sentence: <sentence>\textbackslash n\textbackslash n.Sentiment: <sentiment>\textbackslash n}. The tokenized prompt is fed to the model as both \texttt{input\_ids} and \texttt{labels} to ensure the model learns to predict the sentiment label directly. All pretrained model weights stay frozen by setting \texttt{requires\_grad=False}, while the LoRA parameters are trained with a batch size of 1 and gradient accumulation of 16.
 
-\noindent\textbf{Evaluation} Describe the evaluation step.
+\noindent\textbf{Evaluation} At validation time, we feed the same prompt \emph{without} the sentiment token \texttt{Classify the sentiment of this sentence: <sentence>\textbackslash n\textbackslash n.Sentiment:}. A single forward pass yields the logits for the final position. We manually extract the token for each sentiment and look up its index in the model's vocabulary. The prediction is the index of the sentiment token with the highest logit. 
 
 \noindent\textbf{Metrics} Describe the metrics used: accuracy, F1, train time, GPU memory.
 
