@@ -10,6 +10,8 @@
 \usepackage{bm}
 \usepackage{cite}
 \usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
 %---------------------------------------------------------
 \newcommand{\eref}[1]{(\ref{#1})}
 %---------------------------------------------------------
@@ -59,13 +61,14 @@ This survey offers a comprehensive overview of five LoRA variants, including the
 
 \noindent\textbf{Metrics} Describe the metrics used: accuracy, F1, train time, GPU memory.
 
-%---------------------------------------------------------
+\noindent\textbf{Hardware} All experiments were run on a single NVIDIA RTX 2070 with 8 GB of GPU memory. We enforced strict memory budgets to ensure that all methods could be compared under the same conditions. The training time was measured in wall-clock time, and the peak GPU memory usage was monitored throughout the training process.
+
 \section{Low Rank Adaptation}
-\noindent\textbf{LoRA} Describe LoRA \cite{hu2021loralowrankadaptationlarge}.
+\noindent\textbf{LoRA.}  Low-Rank Adaptation (LoRA) \cite{hu2021loralowrankadaptationlarge} freezes the pre-trained weight matrix $W\!\in\!\mathbb{R}^{d_{\text{out}}\times d_{\text{in}}}$ and learns a low-rank residual $\Delta W = A B^{\top}$ with $A\!\in\!\mathbb{R}^{d_{\text{out}}\times r}$ and $B\!\in\!\mathbb{R}^{d_{\text{in}}\times r}$, rank $r\!\ll\!\min(d_{\text{out}},d_{\text{in}})$.  During fine-tuning the forward pass uses $W+\Delta W$ while gradients flow only through $A$ and $B$, reducing trainable parameters from $d_{\text{out}}d_{\text{in}}$ to $r(d_{\text{out}}+d_{\text{in}})$.  Because the base weights never change, LoRA brings large memory savings by orders of magnitude (no optimizer states on $W$) and enables faster experimentation on consumer GPUs.
 
-\noindent\textbf{Impact of initialization dynamics on LoRA} Describe different LoRA \cite{hayou2024impactinitializationlorafinetuning}
+\noindent\textbf{Swapped-init LoRA (A = 0, B $\sim\mathcal{U}$).}  The original LoRA initialises $A$ from a small uniform distribution and sets $B$ to zero so that $\Delta W$ starts at 0.  Hayou~et~al.\ \cite{hayou2024impactinitializationlorafinetuning} dive deeper into the intuition behind this choice, arguing that it's is indeed better to start from (A = 0, B $\sim\mathcal{U}$) instead of (A $\sim\mathcal{U}$, B = 0) and the reason behind this might be that the first initializatino allows the use of larger learning rates (without causing output instability) resulting in more efficient learning.
 
-\noindent\textbf{LoRA-XS} Describe LoRA-XS \cite{balazy2024loraxslowrankadaptationextremely}.
+\noindent\textbf{LoRA-XS.}  LoRA-XS \cite{balazy2024loraxslowrankadaptationextremely} adds an intermediate low-rank matrix $R\!\in\!\mathbb{R}^{r\times r}$ and factorises the residual as $\Delta W = A R B^{\top}$.  The extra $r^{2}$ parameters increase expressiveness while preserving the $\mathcal{O}(r(d_{\text{out}}+d_{\text{in}}))$ memory budget (for typical $r\!\ll\!d$ the $r^{2}$ term is negligible). Empirically, LoRA-XS allows for more expressive low-rank representations while maintaining the same memory footprint as vanilla LoRA.
 
 \noindent\textbf{LoRA+} Describe LoRA+ \cite{hayou2024loraefficientlowrank}
 
