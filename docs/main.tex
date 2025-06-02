@@ -8,6 +8,8 @@
 \usepackage{graphicx}
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 \usepackage{bm}
+\usepackage{cite}
+\usepackage{amsmath}
 %---------------------------------------------------------
 \newcommand{\eref}[1]{(\ref{#1})}
 %---------------------------------------------------------
@@ -26,7 +28,7 @@
 \maketitle
 %---------------------------------------------------------
 \begin{abstract} 
-Explain what this survey is about, the methods used and the metrics used.
+Low-rank adaptation (LoRA) has become a lightweight alternative to full fine-tuning for large language models. In this work, we benchmark vanilla LoRA and four recent LoRA variants: swapped-init LoRA (A = 0, B $\sim \mathcal{U}(-0.01, 0.01)$), LoRA-XS ($A \cdot R \cdot B$ factorisation), LoRA+ ($\eta_A \neq \eta_B$ learning rate scaling) and PiSSA-initialised LoRA ($\text{SVD}(W)$ warm-start) on the TinyLlama-1.1 B backbone and the GLUE SST-2 sentiment-classification task.  All experiments were performed on a single RTX 2070 (8 GB), enforcing strict memory budgets. We report classification accuracy, macro-F1, wall-clock training time and peak GPU memory to highlight the trade-offs each variant offers under resource constrained conditions.
 \end{abstract}
 %---------------------------------------------------------
 \section{Introduction}
