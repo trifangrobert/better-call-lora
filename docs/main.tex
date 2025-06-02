@@ -66,7 +66,10 @@ The dataset contains 70,042 samples in total: 67,349 in the train set, 872 in th
 
 \subsection{Evaluation} At validation time, we feed the same prompt \emph{without} the sentiment token \texttt{Classify the sentiment of this sentence: <sentence>\textbackslash n\textbackslash n.Sentiment:}. A single forward pass yields the logits for the final position. We verified that each label corresponds to a single token (e.g., " positive" and " negative") to ensure a valid head-to-head comparison in the final logit vector. We manually extract the token for each sentiment and look up its index in the model's vocabulary. The prediction is the index of the sentiment token with the highest logit.
 
-\subsection{Metrics} Describe the metrics used: accuracy, F1, train time, GPU memory.
+\subsection{Metrics}
+Describe the metrics used: accuracy, F1, train time, GPU memory.
+We evaluate each method using classification accuracy, macro F1-score, wall-clock training time, and peak GPU memory usage. Accuracy measures the proportion of correctly predicted sentiment labels, while macro F1-score does assumes class balance and is particularly relevant for binary tasks like SST-2. We use Weights \& Biases (\href{https://wandb.ai/site/}{wandb}) to log all metrics in real time during training. Models are trained for 1250 steps with an evaluation round every 50 steps to monitor progression. Training time and peak GPU usage are measured from the beginning of the first step until the end of the last step, excluding model/tokenizer loading and initialization.
+
 
 \subsection{Hardware} All experiments were run on a single NVIDIA RTX 2070 with 8 GB of GPU memory. We enforced strict memory budgets to ensure that all methods could be compared under the same conditions. The training time was measured in wall-clock time, and the peak GPU memory usage was monitored throughout the training process.
 
