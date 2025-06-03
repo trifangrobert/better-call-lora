@@ -105,7 +105,7 @@ We begin by comparing the original LoRA initialisation ($A \sim \mathcal{U}(-0.0
 
 \subsection{LoRA+}
 
-We used the official implementation of LoRA+ which can be found at the GitHub repository \href{https://github.com/nikhil-ghosh-berkeley/loraplus}{nikhil-ghosh-berkeley/loraplus}. Following the paper, we tested with $\alpha = 16$ and $r = 32$. For the learning rates we leveraged a grid-search over the following values: $\eta_A \in \{10^{-5}, 5 \times 10^{-5}, 10^{-4}\}$ and $\eta_B \in \{10^{-4}, 2 \times 10^{-4}, 4 \times 10^{-4}\}$. Results presented in Figure~\ref{fig:lora_plus} show that the best performing ratio $\eta_B / \eta_A$ is 4, with $\eta_A = 10^{-4}$. Picking the right learning rates is still crucial, but using a different learning rate for $B$ not only yields better results, but also allows for faster convergence. A very interesting observation is that configurations with same value of $\eta_A \cdot \eta_B$ have similar convergence speed.
+We used the official implementation of LoRA+ which can be found at the GitHub repository \href{https://github.com/nikhil-ghosh-berkeley/loraplus}{nikhil-ghosh-berkeley/loraplus}. Following the paper, we tested with $\alpha = 16$ and $r = 64$. For the learning rates we leveraged a grid-search over the following values: $\eta_A \in \{10^{-5}, 5 \times 10^{-5}, 10^{-4}\}$ and $\eta_B \in \{10^{-4}, 2 \times 10^{-4}, 4 \times 10^{-4}\}$. Results presented in Figure~\ref{fig:lora_plus} show that the best performing ratio $\eta_B / \eta_A$ is 4, with $\eta_A = 10^{-4}$. Picking the right learning rates is still crucial, but using a different learning rate for $B$ not only yields better results, but also allows for faster convergence. A very interesting observation is that configurations with same value of $\eta_A \cdot \eta_B$ have similar convergence speed.
 
 \begin{figure}[ht]
     \centering
@@ -127,7 +127,15 @@ Since PiSSA is integrated with \href{https://github.com/huggingface/peft}{PEFT},
 
 %---------------------------------------------------------
 \section{Conclusion}
-Explain that, because of limited compute resources, we couldn't see meaningful results.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=1\linewidth]{../plots/train_loss_and_gpu_mem_final.pdf}
+    \caption{On the upper side, training loss for the five LoRA variants with best performing hyperparameters. Only the first 200 training steps are shown for clarity. On the lower side, peak GPU memory usage for the same runs.}
+    \label{fig:pissa}
+\end{figure}
+
+% limited data no meaninigful results
 
 \bibliography{mybib}
 \bibliographystyle{plain}
