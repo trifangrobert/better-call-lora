@@ -49,7 +49,7 @@ This survey offers a comprehensive overview of five LoRA variants, including the
 
 \subsection{Model}
 
-We employ the \href{https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0}{\texttt{TinyLLaMA-1.1B-Chat-v1.0}} model from HuggingFace, a 1.1B parameter decoder-only transformer trained on 3T tokens. The architecture features 22 layers, 32 attention heads and an embedding size of 2048. The dataset used during pretraining consists of 950B tokens from a mixture of Slimpajama (excluding GitHub) and Starcoderdata (code only), with a natural language to code ratio of 7:3. Total training spanned 1.43M steps (just over 3 epochs). The model's scale relative to downstream datasets like SST-2 motivates low-rank fine-tuning approaches.
+We employ the \href{https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0}{\texttt{TinyLLaMA-1.1B-Chat-v1.0}} model from HuggingFace, a 1.1B parameter decoder-only transformer trained on 3T tokens. The architecture features 22 layers, 32 attention heads and an embedding size of 2048. The dataset used during pretraining consists of 950B tokens from a mixture of \href{https://huggingface.co/datasets/cerebras/SlimPajama-627B}{Slimpajama} (excluding GitHub) and \href{https://huggingface.co/datasets/bigcode/starcoderdata}{Starcoderdata} (code only), with a natural language to code ratio of 7:3. Total training spanned 1.43M steps (just over 3 epochs). The model's scale relative to downstream datasets like SST-2 motivates low-rank fine-tuning approaches.
 
 \subsection{Dataset}
 
