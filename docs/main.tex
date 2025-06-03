@@ -6,7 +6,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{hyperref}
 \usepackage{graphicx}
-\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+% \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 \usepackage{bm}
 \usepackage{cite}
 \usepackage{amsmath}
@@ -101,9 +101,13 @@ We used the official implementation of LoRA+ which can be found at the GitHub re
     \label{fig:lora_plus}
 \end{figure}
 
+\subsection{PiSSA}
+
+Since PiSSA is integrated with \href{https://github.com/huggingface/peft}{PEFT}, we used the implementation provided by this library. For these experiments we used a learning rate of $5 \times 10^{-5}$ and three rank values: 2, 4, and 8. As in the PiSSA paper, we used $\alpha = r$. The results presented in Figure~\ref{fig:pissa} denote that performance and convergence speed increase with the rank, which is expected as the low-rank matrices capture more information from the original weight matrix. However, with larger increases in rank the GPU consumption follows the same trend, and the performance gains are marginal.
+
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=1\linewidth]{../plots/pissa_train_loss_vs_step_final_v2.pdf}
+    \includegraphics[width=1\linewidth]{../plots/pissa_train_loss_vs_step_final_v3.pdf}
     \caption{TODO}
     \label{fig:pissa}
 \end{figure}
@@ -114,7 +118,6 @@ We used the official implementation of LoRA+ which can be found at the GitHub re
     \caption{TODO}
     \label{fig:ba_init}
 \end{figure}
-
 
 For each method, describe the hyperparameters explored with a table.
 
