@@ -1,3 +1,6 @@
 .vscode/
 runs/
 wandb/
+loraplus/
+**/latex_out/
+results/
