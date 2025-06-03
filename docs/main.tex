@@ -78,7 +78,7 @@ We evaluate each method using classification accuracy, macro F1-score, wall-cloc
 
 \noindent\textbf{LoRA.}  Low-Rank Adaptation (LoRA) \cite{hu2021loralowrankadaptationlarge} freezes the pre-trained weight matrix $W\!\in\!\mathbb{R}^{d_{\text{out}}\times d_{\text{in}}}$ and learns a low-rank residual $\Delta W = B A$ with $A\!\in\!\mathbb{R}^{r \times d_{\text{in}}}$ and $B\!\in\!\mathbb{R} ^ {d_{\text{out}} \times r}$, rank $r\!\ll\!\min(d_{\text{out}},d_{\text{in}})$.  During fine-tuning the forward pass uses $W+\Delta W$ while gradients flow only through $A$ and $B$, reducing trainable parameters from $d_{\text{out}}d_{\text{in}}$ to $r(d_{\text{out}}+d_{\text{in}})$.  Because the base weights never change, LoRA brings large memory savings by orders of magnitude (no optimizer states on $W$) and enables faster experimentation on consumer GPUs.
 
-\noindent\textbf{Swapped-init LoRA (A = 0, B $\sim\mathcal{U}$).}  The original LoRA initialises $B$ from a small uniform distribution and sets $A$ to zero so that $\Delta W$ starts at 0.  Hayou~et~al.\ \cite{hayou2024impactinitializationlorafinetuning} dive deeper into the intuition behind this choice, arguing that it's is indeed better to start from (A = 0, B $\sim\mathcal{U}$) instead of (A $\sim\mathcal{U}$, B = 0) and the reason behind this might be that the first initialization allows the use of larger learning rates (without causing output instability) resulting in more efficient learning.
+\noindent\textbf{Swapped-init LoRA (A = 0, B $\sim\mathcal{U}$).}  The original LoRA initialises $A$ from a small normal distribution and sets $B$ to zero so that $\Delta W$ starts at 0.  Hayou~et~al.\ \cite{hayou2024impactinitializationlorafinetuning} dive deeper into the intuition behind this choice, arguing that it's is indeed better to start from (A = 0, B $\sim\mathcal{U}$) instead of (A $\sim\mathcal{N}$, B = 0) and the reason behind this might be that the first initialization allows the use of larger learning rates (without causing output instability) resulting in more efficient learning.
 
 \noindent\textbf{LoRA-XS.} LoRA-XS \cite{balazy2024loraxslowrankadaptationextremely} adds an intermediate low-rank matrix $R\!\in\!\mathbb{R}^{r\times r}$ and factorises the residual as $\Delta W = A R B^{\top}$.  The extra $r^{2}$ parameters increase expressiveness while preserving the $\mathcal{O}(r(d_{\text{out}}+d_{\text{in}}))$ memory budget (for typical $r\!\ll\!d$ the $r^{2}$ term is negligible). Empirically, LoRA-XS allows for more expressive low-rank representations while maintaining the same memory footprint as vanilla LoRA.
 
@@ -90,12 +90,14 @@ We evaluate each method using classification accuracy, macro F1-score, wall-cloc
 %---------------------------------------------------------
 \section{Experiments}
 
-\subsection{LoRA initialisations}
+\subsection{LoRA variants}
+
+We begin by comparing the original LoRA initialisation ($A \sim \mathcal{U}(-0.01, 0.01), B = 0$) with the swapped LoRA initialisation ($A = 0$, $B \sim \mathcal{U}(-0.01, 0.01)$) and with the LoRA-XS method, ($A \sim \mathcal{U}(-0.01, 0.01), B = 0, R = I_r$, with $I_r$ being the identity matrix). All three methods use five different ranks: 2, 4, 8, 16, and 32. Additionally, we tested with $\alpha = r$ and a learning rate of $2 \times 10 ^ {-4}$. The results presented in Figure~\ref{fig:ba_init} show that the swapped LoRA initialisation outperforms the original LoRA initialisation in most cases. However, both initialisation schemes are surpassed by the LoRA-XS method for all ranks, which is explained by the additional expresivity introduced by the intermediate low-rank matrix $R$. Results show as well that performance increases with the rank, but diminishes after a certain point.
 
 \begin{figure}[ht]
     \centering
     \includegraphics[width=1\linewidth]{../plots/ba_init_eval_acc_f1_heatmaps.pdf}
-    \caption{TODO}
+    \caption{Accuracy and F1-score comparison between three different LoRA initialisations: original (A $\sim \mathcal{U}(-0.01, 0.01)$, B = 0), swapped-\texttt{init} (A = 0, B $\sim \mathcal{U}(-0.01, 0.01)$), and LoRA-XS (A $\sim \mathcal{U}(-0.01, 0.01)$, B $\sim \mathcal{U}(-0.01, 0.01)$).}
     \label{fig:ba_init}
 \end{figure}
 
