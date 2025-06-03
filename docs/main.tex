@@ -12,6 +12,7 @@
 \usepackage{amsmath}
 \usepackage{amsthm}
 \usepackage{amsfonts}
+\usepackage{booktabs}
 %---------------------------------------------------------
 \newcommand{\eref}[1]{(\ref{#1})}
 %---------------------------------------------------------
@@ -121,21 +122,42 @@ Since PiSSA is integrated with \href{https://github.com/huggingface/peft}{PEFT},
 \begin{figure}[ht]
     \centering
     \includegraphics[width=1\linewidth]{../plots/pissa_train_loss_vs_step_final_v3.pdf}
-    \caption{On the left side, training loss for PiSSA finetuning with different ranks. On the right side, accuracy and F1-score for the same runs.}
+    \caption{On the left side, training loss for PiSSA fine-tuning with different ranks. On the right side, accuracy and F1-score for the same runs.}
     \label{fig:pissa}
 \end{figure}
 
 %---------------------------------------------------------
 \section{Conclusion}
 
+In the end, we compare five LoRA variants by selecting the best hyperparameter configuration for each, based on evaluation accuracy as shown in Figure~\ref{fig:train_loss_gpu_mem} and Table~\ref{tab:eval_metrics_transposed}.
+
 \begin{figure}[ht]
     \centering
     \includegraphics[width=1\linewidth]{../plots/train_loss_and_gpu_mem_final.pdf}
     \caption{On the upper side, training loss for the five LoRA variants with best performing hyperparameters. Only the first 200 training steps are shown for clarity. On the lower side, peak GPU memory usage for the same runs.}
-    \label{fig:pissa}
+    \label{fig:train_loss_gpu_mem}
 \end{figure}
 
-% limited data no meaninigful results
+The results indicate that LoRA-XS achieves the highest accuracy and F1-score. However, this comes at the cost of significantly longer fine-tuning and higher GPU consumption. The original LoRA method and the swapped initialisation variant offer an excellent balance, as they demonstrate the fastest fine-tuning time and the best accuracy performance, second only to LoRA-XS. LoRA+ also performs well, falling just behind in accuracy and F1-score while maintaining moderate resource demands. On the other hand, PiSSA lags behind across all metrics, possibly due to its use of a too low rank, with further exploration at higher ranks left for future work.
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{lccc}
+    \toprule
+    Method & Accuracy & F1-score & Runtime (s) \\
+    \midrule
+    LoRA & 0.948 & 0.950 & 4959 \\
+    Swapped & 0.950 & 0.950 & \textbf{4952} \\
+    LoRA-XS & \textbf{0.951} & \textbf{0.952} & 6232 \\
+    LoRA+ & 0.948 & 0.950 & 5051 \\
+    PiSSA & 0.943 & 0.944 & 4982 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Comparison between the five different LoRA variants: LoRA-XS ($r=16$), PiSSA ($r=8$), LoRA+ ($\alpha=16, r=64$), swapped LoRA ($A=0, B\sim\mathcal{U}, r=4$) and original LoRA ($A\sim\mathcal{U}, B=0, r=4$). The table shows the evaluation accuracy, F1-score and training time for each method.}
+  \label{tab:eval_metrics_transposed}
+\end{table}
+
+Overall, LoRA and its variants present a powerful tool for fine-tuning large language models, especially in GPU, time, or data-constrained scenarios. The results of this survey can serve as a guide for making a more informed choice when selecting a LoRA variant for a specific task.
 
 \bibliography{mybib}
 \bibliographystyle{plain}
