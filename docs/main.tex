@@ -90,6 +90,17 @@ We evaluate each method using classification accuracy, macro F1-score, wall-cloc
 %---------------------------------------------------------
 \section{Experiments}
 
+\subsection{LoRA initialisations}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=1\linewidth]{../plots/ba_init_eval_acc_f1_heatmaps.pdf}
+    \caption{TODO}
+    \label{fig:ba_init}
+\end{figure}
+
+
+
 \subsection{LoRA+}
 
 We used the official implementation of LoRA+ which can be found at the GitHub repository \href{https://github.com/nikhil-ghosh-berkeley/loraplus}{nikhil-ghosh-berkeley/loraplus}. Following the paper, we tested with $\alpha = 16$ and $r = 32$. For the learning rates we leveraged a grid-search over the following values: $\eta_A \in \{10^{-5}, 5 \times 10^{-5}, 10^{-4}\}$ and $\eta_B \in \{10^{-4}, 2 \times 10^{-4}, 4 \times 10^{-4}\}$. Results presented in Figure~\ref{fig:lora_plus} show that the best performing ratio $\eta_B / \eta_A$ is 4, with $\eta_A = 10^{-4}$. Picking the right learning rates is still crucial, but using a different learning rate for $B$ not only yields better results, but also allows for faster convergence. A very interesting observation is that configurations with same value of $\eta_A \cdot \eta_B$ have similar convergence speed.
@@ -108,20 +119,9 @@ Since PiSSA is integrated with \href{https://github.com/huggingface/peft}{PEFT},
 \begin{figure}[ht]
     \centering
     \includegraphics[width=1\linewidth]{../plots/pissa_train_loss_vs_step_final_v3.pdf}
-    \caption{TODO}
+    \caption{On the left side, training loss for PiSSA finetuning with different ranks. On the right side, accuracy and F1-score for the same runs.}
     \label{fig:pissa}
 \end{figure}
-
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=1\linewidth]{../plots/ba_init_eval_acc_f1_heatmaps.pdf}
-    \caption{TODO}
-    \label{fig:ba_init}
-\end{figure}
-
-For each method, describe the hyperparameters explored with a table.
-
-Gather the best results into a final table, comparing the methods.
 
 %---------------------------------------------------------
 \section{Conclusion}
